@@ -9,6 +9,13 @@ import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import time
+import cloudscraper
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 if __package__ is None or __package__ == "":
     from helpers import (
@@ -58,6 +65,10 @@ class InstantGamingTracker:
         self.enable_notification = False
         self.enable_email = False
         self.credential = DEFAULT_CREDENTIAL
+
+        self.scraper = cloudscraper.create_scraper()
+
+        self.driver = webdriver.Chrome("C:\\Users\\MWSC\\Downloads\chromedriver.exe")
 
     def init_arguments(self):
         arguments = get_arguments(None)
@@ -140,25 +151,45 @@ class InstantGamingTracker:
     def check_game(self, game_url):
         logger.debug("game_url : %s", game_url)
 
-        page = BeautifulSoup(requests.get(game_url, headers=headers).content, "html.parser")
+        self.driver.get(game_url)
+
+        time.sleep(5)
+
+        self.driver.find_element_by_css_selector(".recaptcha-checkbox-border").click()
+
+        # WebDriverWait(self.driver, 5).until(element_present)
+
+        # element.click()
+
+        """
+        page = BeautifulSoup(
+            self.driver.get(game_url, headers=headers).content, "html.parser"
+        )
+
+        """
+
+        print(page)
 
         title = page.select(".title h1")[0].text
-        price = page.find("div", {"class" : "price"}).text[:-1]
-        discount = page.find("div", {"class" : "discount"}).text[:-1]
-        platform = page.find("a", {"class" : "platform"}).text
-        languages = page.find("div", {"class" : "languages"}).text.replace("Languages", "").strip() #TODO check if no better solution
-        description = page.find("div", {"class" : "description"}).text
-        release = page.find("div", {"class" : "release"}).find("span").text
-        rate = page.find("span", {"class" : "rate"}).text
+        price = page.find("div", {"class": "price"}).text[:-1]
+        discount = page.find("div", {"class": "discount"}).text[:-1]
+        platform = page.find("a", {"class": "platform"}).text
+        languages = (
+            page.find("div", {"class": "languages"})
+            .text.replace("Languages", "")
+            .strip()
+        )  # TODO check if no better solution
+        description = page.find("div", {"class": "description"}).text
+        release = page.find("div", {"class": "release"}).find("span").text
+        rate = page.find("span", {"class": "rate"}).text
         retail_price = page.select(".retail span")[0].text.strip()[:-1]
-
 
         logger.debug("title : %s", title)
         logger.debug("price : %s", price)
         logger.debug("discount : %s", discount)
         logger.debug("platform : %s", platform)
         logger.debug("languages : %s", languages)
-        #logger.debug("description : %s", description)
+        # logger.debug("description : %s", description)
         logger.debug("platform : %s", release)
         logger.debug("rate : %s", rate)
         logger.debug("retail_price : %s", retail_price)
@@ -168,9 +199,7 @@ class InstantGamingTracker:
         tracked_game.title = game_title_tag.text.strip()
 
         if "selector" in game:
-            count = (
-                game["selector"]["count"] if "count" in game["selector"] else 0
-            )
+            count = game["selector"]["count"] if "count" in game["selector"] else 0
             price_tag = page.select(game["selector"]["value"])[count]
         else:
             price_tag = page.find(id="priceblock_ourprice")
@@ -239,9 +268,7 @@ class InstantGamingTracker:
                 logger.debug("produce %s available", game["co"])
 
                 if self.enable_email:
-                    self.send_email(
-                        game["code"], title=tracked_game.title, url=url
-                    )
+                    self.send_email(game["code"], title=tracked_game.title, url=url)
 
                 if self.enable_notification:
                     self.send_notification_topic(
