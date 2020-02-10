@@ -68,7 +68,7 @@ class InstantGamingTracker:
 
         self.scraper = cloudscraper.create_scraper()
 
-        self.driver = webdriver.Chrome("C:\\Users\\MWSC\\Downloads\chromedriver.exe")
+        self.driver = webdriver.Chrome()
 
     def init_arguments(self):
         arguments = get_arguments(None)
