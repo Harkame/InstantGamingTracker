@@ -68,7 +68,7 @@ class InstantGamingTracker:
 
         self.scraper = cloudscraper.create_scraper()
 
-        self.driver = webdriver.Chrome()
+        #self.driver = webdriver.Chrome()
 
     def init_arguments(self):
         arguments = get_arguments(None)
@@ -151,11 +151,15 @@ class InstantGamingTracker:
     def check_game(self, game_url):
         logger.debug("game_url : %s", game_url)
 
-        self.driver.get(game_url)
+        page = BeautifulSoup(requests.get(game_url, headers=headers).content, "html.parser")
 
-        time.sleep(5)
+        #self.driver.get(game_url)
 
-        self.driver.find_element_by_css_selector(".recaptcha-checkbox-border").click()
+        #self.driver.get(game_url)
+
+        #time.sleep(5)
+
+        #self.driver.find_element_by_css_selector(".recaptcha-checkbox-border").click()
 
         # WebDriverWait(self.driver, 5).until(element_present)
 
@@ -168,7 +172,6 @@ class InstantGamingTracker:
 
         """
 
-        print(page)
 
         title = page.select(".title h1")[0].text
         price = page.find("div", {"class": "price"}).text[:-1]
